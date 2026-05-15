@@ -23,11 +23,13 @@ export default function OmegleOverlay() {
         step,
         displayName,
         email,
+        myGender,
         preference,
         matchData,
         localStream,
         setDisplayName,
         setEmail,
+        setMyGender,
         setPreference,
         setStep,
         closeOmegle,
@@ -53,14 +55,7 @@ export default function OmegleOverlay() {
             setDisplayName(meData.user.name);
         }
 
-        // Auto-skip setup if we have a name and haven't auto-progressed yet during this session
-        if (step === "setup" && meData.user.name && !autoProgressed) {
-            setAutoProgressed(true);
-            requestMedia().then((stream) => {
-                if (stream) setStep("camera-test");
-            });
-        }
-    }, [meData, email, displayName, setEmail, setDisplayName, step, autoProgressed, requestMedia, setStep]);
+    }, [meData, email, displayName, setEmail, setDisplayName]);
 
     // Attach local stream to preview video
     useEffect(() => {
@@ -92,7 +87,9 @@ export default function OmegleOverlay() {
                     <SetupScreen
                         displayName={displayName}
                         email={email}
+                        myGender={myGender}
                         setDisplayName={setDisplayName}
+                        setMyGender={setMyGender}
                         meData={meData}
                         authLoading={authLoading}
                         onContinue={async () => {
@@ -120,6 +117,7 @@ export default function OmegleOverlay() {
                         partnerName={matchData.partnerName}
                         onSkip={skip}
                         onLeave={leave}
+                        matchedAt={matchData.matchedAt}
                     />
                 )}
 
@@ -138,14 +136,18 @@ export default function OmegleOverlay() {
 function SetupScreen({
     displayName,
     email,
+    myGender,
     setDisplayName,
+    setMyGender,
     meData,
     authLoading,
     onContinue,
 }: {
     displayName: string;
     email: string;
+    myGender: "any" | "male" | "female";
     setDisplayName: (name: string) => void;
+    setMyGender: (gender: "any" | "male" | "female") => void;
     meData: any;
     authLoading: boolean;
     onContinue: () => void;
@@ -194,6 +196,31 @@ function SetupScreen({
                             placeholder="Enter your name"
                             className="w-full rounded-2xl border border-white/5 bg-white/5 px-5 py-4 text-white placeholder-zinc-700 outline-none transition-all focus:border-white/20 focus:bg-white/10"
                         />
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-[10px] font-semibold uppercase text-zinc-600 tracking-wider">
+                            I Am A
+                        </label>
+                        <div className="grid grid-cols-3 gap-3">
+                            {[
+                                { label: "Secret", value: "any" },
+                                { label: "Male", value: "male" },
+                                { label: "Female", value: "female" },
+                            ].map((gender) => (
+                                <button
+                                    key={gender.value}
+                                    onClick={() => setMyGender(gender.value as any)}
+                                    className={`rounded-2xl border px-3 py-4 text-[10px] font-semibold uppercase tracking-wider transition-all ${
+                                        myGender === gender.value
+                                            ? "border-white bg-white/10 text-white shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                                            : "border-white/5 bg-white/5 text-zinc-500 hover:border-white/20 hover:text-white"
+                                    }`}
+                                >
+                                    {gender.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div>

@@ -108,6 +108,31 @@ io.on("connection", (socket) => {
         }
     });
 
+    // ─── Friend & Call Events ───
+    socket.on("friend:request", (data: { targetUserId: string }) => {
+        if (data.targetUserId) {
+            io.to(`user:${data.targetUserId}`).emit("friend:request:incoming", { fromUserId: socket.userId });
+        }
+    });
+
+    socket.on("friend:accept", (data: { targetUserId: string }) => {
+        if (data.targetUserId) {
+            io.to(`user:${data.targetUserId}`).emit("friend:accept:incoming", { fromUserId: socket.userId });
+        }
+    });
+
+    socket.on("call:ring", (data: { targetUserId: string, roomName: string, fromUserName?: string }) => {
+        if (data.targetUserId) {
+            io.to(`user:${data.targetUserId}`).emit("call:incoming", { fromUserId: socket.userId, roomName: data.roomName, fromUserName: data.fromUserName || "Friend" });
+        }
+    });
+
+    socket.on("call:decline", (data: { targetUserId: string }) => {
+        if (data.targetUserId) {
+            io.to(`user:${data.targetUserId}`).emit("call:declined", { fromUserId: socket.userId });
+        }
+    });
+
     socket.on("disconnect", async () => {
         const userId = socket.userId;
         console.log(`[WS] Disconnected: ${socket.id} (user: ${userId ?? "unknown"})`);

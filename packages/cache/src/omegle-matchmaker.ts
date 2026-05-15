@@ -5,6 +5,7 @@ export interface OmegleUser {
     userId: string;
     displayName: string;
     email: string;
+    myGender: "any" | "male" | "female";
     preference: "any" | "male" | "female";
     joinedAt: number;
 }
@@ -63,12 +64,12 @@ export class OmegleMatchmaker {
 
     // ─── Queue Management ───
 
-    async joinQueue(userId: string, preference: string): Promise<void> {
+    async joinQueue(userId: string, preference: string, myGender: string): Promise<void> {
         // Remove first to avoid duplicates
         await this.leaveQueue(userId);
 
         // Push to the general queue
-        await this.redis.lpush(this.QUEUE_KEY, JSON.stringify({ userId, preference }));
+        await this.redis.lpush(this.QUEUE_KEY, JSON.stringify({ userId, preference, myGender }));
     }
 
     async leaveQueue(userId: string): Promise<void> {
@@ -87,7 +88,7 @@ export class OmegleMatchmaker {
         }
     }
 
-    async findMatch(userId: string, preference: string): Promise<{ matchedUserId: string; roomName: string } | null> {
+    async findMatch(userId: string, preference: string, myGender: string): Promise<{ matchedUserId: string; roomName: string } | null> {
         const items = await this.redis.lrange(this.QUEUE_KEY, 0, -1);
 
         for (const item of items) {
@@ -105,17 +106,16 @@ export class OmegleMatchmaker {
                     continue;
                 }
 
-                // Preference matching:
-                // "any" matches everyone, otherwise must match each other's preference
                 const queuedUserData = await this.getOnlineUser(parsed.userId);
                 if (!queuedUserData) continue;
 
-                const preferencesMatch =
-                    preference === "any" ||
-                    parsed.preference === "any" ||
-                    preference === parsed.preference;
+                const userB_gender = queuedUserData.myGender || parsed.myGender || "any";
+                const userA_gender = myGender || "any";
 
-                if (!preferencesMatch) continue;
+                const A_likes_B = preference === "any" || preference === userB_gender;
+                const B_likes_A = parsed.preference === "any" || parsed.preference === userA_gender;
+
+                if (!(A_likes_B && B_likes_A)) continue;
 
                 // Found a match! Remove both users from queue
                 await this.redis.lrem(this.QUEUE_KEY, 0, item);

@@ -17,12 +17,12 @@ export function useOmegle() {
     const { data: pollData } = useQuery({
         queryKey: ["omegle-poll"],
         queryFn: async () => {
-            const { displayName, preference } = useOmegleStore.getState();
+            const { displayName, preference, myGender } = useOmegleStore.getState();
             const res = await fetch(`${API_BASE}/api/v1/omegle/poll`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ displayName, preference }),
+                body: JSON.stringify({ displayName, preference, myGender }),
             });
             if (!res.ok) throw new Error("Failed to poll");
             return res.json();
@@ -43,12 +43,12 @@ export function useOmegle() {
     // 2. Join Mutation
     const joinMutation = useMutation({
         mutationFn: async () => {
-            const { displayName, email, preference } = useOmegleStore.getState();
+            const { displayName, email, preference, myGender } = useOmegleStore.getState();
             const res = await fetch(`${API_BASE}/api/v1/omegle/join`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ displayName, email, preference }),
+                body: JSON.stringify({ displayName, email, preference, myGender }),
             });
             if (!res.ok) throw new Error("Failed to join");
             return res.json();
@@ -77,12 +77,12 @@ export function useOmegle() {
     // 3. Skip Mutation
     const skipMutation = useMutation({
         mutationFn: async () => {
-            const { displayName, preference } = useOmegleStore.getState();
+            const { displayName, preference, myGender } = useOmegleStore.getState();
             const res = await fetch(`${API_BASE}/api/v1/omegle/skip`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ displayName, preference }),
+                body: JSON.stringify({ displayName, preference, myGender }),
             });
             if (!res.ok) throw new Error("Failed to skip");
             return res.json();

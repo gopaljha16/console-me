@@ -38,7 +38,7 @@ export const joinOmegle = catchAsync(
     async (req: AuthRequest, res: Response) => {
         try {
             const userId = req.userId!;
-            const { displayName, email, preference = "any" } = req.body;
+            const { displayName, email, preference = "any", myGender = "any" } = req.body;
 
             if (!displayName) {
                 throw new AppError("Display name is required", 400);
@@ -51,15 +51,16 @@ export const joinOmegle = catchAsync(
                 userId,
                 displayName,
                 email: email || req.user?.email || "",
+                myGender,
                 preference,
                 joinedAt: Date.now(),
             });
 
             // Add to queue
-            await matchmaker.joinQueue(userId, preference);
+            await matchmaker.joinQueue(userId, preference, myGender);
 
             // Try to find a match immediately
-            const match = await matchmaker.findMatch(userId, preference);
+            const match = await matchmaker.findMatch(userId, preference, myGender);
 
             if (match) {
                 // Generate tokens for both users
@@ -76,6 +77,7 @@ export const joinOmegle = catchAsync(
                         token,
                         partnerId: match.matchedUserId,
                         partnerName: partnerData?.displayName || "Stranger",
+                        matchedAt: Date.now(),
                     },
                 });
             } else {
@@ -97,7 +99,7 @@ export const pollMatch = catchAsync(
     async (req: AuthRequest, res: Response) => {
         try {
             const userId = req.userId!;
-            const { preference = "any", displayName = "Stranger" } = req.body;
+            const { preference = "any", myGender = "any", displayName = "Stranger" } = req.body;
 
             const matchmaker = getOmegleMatchmaker();
 
@@ -114,13 +116,14 @@ export const pollMatch = catchAsync(
                         token,
                         partnerId: existingMatch.partnerUserId,
                         partnerName: existingMatch.partnerName,
+                        matchedAt: existingMatch.matchedAt,
                     },
                 });
                 return;
             }
 
             // Try to find a match
-            const match = await matchmaker.findMatch(userId, preference);
+            const match = await matchmaker.findMatch(userId, preference, myGender);
 
             if (match) {
                 const partnerData = await matchmaker.getOnlineUser(match.matchedUserId);
@@ -134,6 +137,7 @@ export const pollMatch = catchAsync(
                         token,
                         partnerId: match.matchedUserId,
                         partnerName: partnerData?.displayName || "Stranger",
+                        matchedAt: Date.now(),
                     },
                 });
             } else {
@@ -181,7 +185,7 @@ export const skipMatch = catchAsync(
     async (req: AuthRequest, res: Response) => {
         try {
             const userId = req.userId!;
-            const { displayName = "User", preference = "any" } = req.body;
+            const { displayName = "User", preference = "any", myGender = "any" } = req.body;
 
             const matchmaker = getOmegleMatchmaker();
 
@@ -189,10 +193,10 @@ export const skipMatch = catchAsync(
             await matchmaker.clearMatch(userId);
 
             // Re-join queue
-            await matchmaker.joinQueue(userId, preference);
+            await matchmaker.joinQueue(userId, preference, myGender);
 
             // Try to find a new match
-            const match = await matchmaker.findMatch(userId, preference);
+            const match = await matchmaker.findMatch(userId, preference, myGender);
 
             if (match) {
                 const partnerData = await matchmaker.getOnlineUser(match.matchedUserId);
@@ -206,6 +210,7 @@ export const skipMatch = catchAsync(
                         token,
                         partnerId: match.matchedUserId,
                         partnerName: partnerData?.displayName || "Stranger",
+                        matchedAt: Date.now(),
                     },
                 });
             } else {

@@ -13,6 +13,7 @@ export interface OmegleMatchData {
     token: string;
     partnerId: string;
     partnerName: string;
+    matchedAt?: number;
 }
 
 type OmegleState = {
@@ -23,6 +24,7 @@ type OmegleState = {
     // User info
     displayName: string;
     email: string;
+    myGender: "any" | "male" | "female";
     preference: "any" | "male" | "female";
 
     // Match data
@@ -37,6 +39,7 @@ type OmegleState = {
     setStep: (step: OmegleStep) => void;
     setDisplayName: (name: string) => void;
     setEmail: (email: string) => void;
+    setMyGender: (gender: "any" | "male" | "female") => void;
     setPreference: (pref: "any" | "male" | "female") => void;
     setMatchData: (data: OmegleMatchData | null) => void;
     setLocalStream: (stream: MediaStream | null) => void;
@@ -48,6 +51,7 @@ const initialState = {
     isOpen: false,
     displayName: "",
     email: "",
+    myGender: "any" as const,
     preference: "any" as const,
     matchData: null,
     localStream: null,
@@ -70,6 +74,7 @@ export const useOmegleStore = create<OmegleState>((set, get) => ({
     setStep: (step) => set({ step }),
     setDisplayName: (displayName) => set({ displayName }),
     setEmail: (email) => set({ email }),
+    setMyGender: (myGender) => set({ myGender }),
     setPreference: (preference) => set({ preference }),
     setMatchData: (matchData) => set({ matchData }),
     setLocalStream: (localStream) => set({ localStream }),

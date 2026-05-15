@@ -26,7 +26,10 @@ import {
     Loader2,
     X,
     Shield,
+    UserPlus,
 } from "lucide-react";
+import { API_BASE } from "@/utils/constants";
+import { useMutation } from "@tanstack/react-query";
 
 interface VideoRoomProps {
     roomName: string;
@@ -34,6 +37,7 @@ interface VideoRoomProps {
     partnerName: string;
     onSkip: () => void;
     onLeave: () => void;
+    matchedAt?: number;
 }
 
 export function VideoRoom({
@@ -42,6 +46,7 @@ export function VideoRoom({
     partnerName,
     onSkip,
     onLeave,
+    matchedAt,
 }: VideoRoomProps) {
     const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || "";
 
@@ -102,6 +107,7 @@ export function VideoRoom({
                     partnerName={partnerName}
                     onSkip={onSkip}
                     onLeave={onLeave}
+                    matchedAt={matchedAt}
                 />
                 <RoomAudioRenderer />
             </LiveKitRoom>
@@ -116,10 +122,12 @@ function VideoCallUI({
     partnerName,
     onSkip,
     onLeave,
+    matchedAt,
 }: {
     partnerName: string;
     onSkip: () => void;
     onLeave: () => void;
+    matchedAt?: number;
 }) {
     const room = useRoomContext();
     const connectionState = useConnectionState();
@@ -139,6 +147,8 @@ function VideoCallUI({
     const [chatOpen, setChatOpen] = useState(false);
     const [chatMessages, setChatMessages] = useState<{ sender: string; text: string }[]>([]);
     const [chatInput, setChatInput] = useState("");
+    const [timeConnected, setTimeConnected] = useState(0);
+    const [friendStatus, setFriendStatus] = useState<"idle" | "sent">("idle");
 
     useEffect(() => {
         if (connectionState === ConnectionState.Connected && localParticipant) {
@@ -192,6 +202,38 @@ function VideoCallUI({
 
     const remoteParticipant = participants.find((p) => !p.isLocal);
 
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (connectionState === ConnectionState.Connected && remoteParticipant) {
+            timer = setInterval(() => {
+                if (matchedAt) {
+                    const elapsed = Math.floor((Date.now() - matchedAt) / 1000);
+                    setTimeConnected(elapsed > 0 ? elapsed : 0);
+                } else {
+                    setTimeConnected((prev) => prev + 1);
+                }
+            }, 1000);
+        } else {
+            setTimeConnected(0);
+        }
+        return () => clearInterval(timer);
+    }, [connectionState, remoteParticipant, matchedAt]);
+
+    const sendFriendRequest = useMutation({
+        mutationFn: async () => {
+            if (!remoteParticipant?.identity) throw new Error("No partner identity");
+            const res = await fetch(`${API_BASE}/api/v1/friends/request`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ targetUserId: remoteParticipant.identity }),
+            });
+            if (!res.ok) throw new Error("Failed");
+            return res.json();
+        },
+        onSuccess: () => setFriendStatus("sent"),
+    });
+
     return (
         <div className="relative flex h-full w-full flex-col md:flex-row gap-0 overflow-hidden bg-zinc-950">
             {/* Left: Your camera */}
@@ -199,7 +241,7 @@ function VideoCallUI({
                 {localVideoTrack && (localVideoTrack.publication?.isSubscribed || localVideoTrack.participant.isLocal) ? (
                     <VideoTrack
                         trackRef={localVideoTrack as any}
-                        className="h-full w-full object-cover mirror grayscale hover:grayscale-0 transition-all duration-700"
+                        className="h-full w-full object-cover mirror transition-all duration-700"
                     />
                 ) : (
                     <div className="flex h-full w-full items-center justify-center bg-zinc-900/10 backdrop-blur-3xl">
@@ -224,7 +266,7 @@ function VideoCallUI({
                 {remoteVideoTrack ? (
                     <VideoTrack
                         trackRef={remoteVideoTrack as any}
-                        className="h-full w-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                        className="h-full w-full object-cover transition-all duration-700"
                     />
                 ) : (
                     <div className="flex h-full w-full items-center justify-center bg-zinc-900/10 backdrop-blur-3xl">
@@ -262,13 +304,30 @@ function VideoCallUI({
                     {partnerName.toUpperCase()}
                 </div>
 
-                <button
-                    onClick={onSkip}
-                    className="absolute right-6 top-6 flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-[10px] font-semibold uppercase tracking-wider transition-all hover:scale-[1.05] active:scale-95 shadow-2xl"
-                >
-                    <SkipForward className="h-3.5 w-3.5" />
-                    Skip Stranger
-                </button>
+                <div className="absolute right-6 top-6 flex items-center gap-3">
+                    {timeConnected >= 10 && (
+                        <button
+                            onClick={() => sendFriendRequest.mutate()}
+                            disabled={friendStatus === "sent"}
+                            className={`flex items-center gap-2 rounded-2xl px-6 py-3 text-[10px] font-semibold uppercase tracking-wider transition-all hover:scale-[1.05] active:scale-95 shadow-2xl ${
+                                friendStatus === "sent" 
+                                ? "bg-zinc-800 text-zinc-500 border border-white/5" 
+                                : "bg-blue-600 text-white shadow-blue-600/20"
+                            }`}
+                        >
+                            <UserPlus className="h-3.5 w-3.5" />
+                            {friendStatus === "sent" ? "Request Sent" : "Add Friend"}
+                        </button>
+                    )}
+
+                    <button
+                        onClick={onSkip}
+                        className="flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-[10px] font-semibold uppercase tracking-wider transition-all hover:scale-[1.05] active:scale-95 shadow-2xl"
+                    >
+                        <SkipForward className="h-3.5 w-3.5" />
+                        Skip Stranger
+                    </button>
+                </div>
             </div>
 
             {/* Controls Bar */}

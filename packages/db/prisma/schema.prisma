@@ -47,6 +47,8 @@ enum NotificationType {
   NEW_MESSAGE
   NEW_COMMENT
   SUBSCRIPTION_EXPIRED
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
 }
 
 enum PostReportReason {
@@ -63,6 +65,11 @@ enum UserReportReason {
   COPYRIGHT
   NSFW_VIOLATION
   OTHER
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
 }
 
 model User {
@@ -102,6 +109,8 @@ model User {
   reportAccounts   ReportAccount[]
   followers        Follow[]        @relation("UserFollowers")
   following        Follow[]        @relation("UserFollowing")
+  friendshipsInitiated Friendship[] @relation("FriendshipsInitiated")
+  friendshipsReceived  Friendship[] @relation("FriendshipsReceived")
 
   @@unique([email])
   @@map("user")
@@ -334,4 +343,19 @@ model ReportAccount {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Friendship {
+  id        String           @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  status    FriendshipStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user1 User @relation("FriendshipsInitiated", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2 User @relation("FriendshipsReceived", fields: [user2Id], references: [id], onDelete: Cascade)
+
+  @@unique([user1Id, user2Id])
 }
