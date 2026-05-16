@@ -1,4 +1,4 @@
-import { Server as NetServer } from "http";
+import { createServer } from "node:http";
 import { Server as ServerIO } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createRedisClient, getSessionManager } from "@repo/cache";
@@ -6,13 +6,14 @@ import { kafka, TOPICS } from "@repo/kafka";
 import type { Consumer } from "@repo/kafka";
 import { server_env as env } from "@repo/env";
 
-const PORT = Number.parseInt(env.SOCKET_PORT || "8080", 10);
+const PORT = Number.parseInt(process.env.PORT || env.SOCKET_PORT || "8080", 10);
+const HOST = "0.0.0.0";
 const NODE_ID = crypto.randomUUID();
 
 const pubClient = createRedisClient();
 const subClient = pubClient.duplicate();
 
-const httpServer = new NetServer((req, res) => {
+const httpServer = createServer((req, res) => {
     if (req.url === "/health") {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ status: "ok", nodeId: NODE_ID }));
@@ -220,8 +221,8 @@ process.on("SIGINT", shutdown);
 
 // ─── Start ───
 
-httpServer.listen(PORT, async () => {
-    console.log(`[WS] Socket server running on ${PORT} (node: ${NODE_ID})`);
+httpServer.listen(PORT, HOST, async () => {
+    console.log(`[WS] Socket server running on ${HOST}:${PORT} (node: ${NODE_ID})`);
 
     try {
         await startBroadcastConsumer();
