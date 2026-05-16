@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useMeQuery } from "./use-me-query";
-import { API_BASE } from "@/utils/constants";
+import { web_env as env } from "@/lib/env";
 
 let socketInstance: Socket | null = null;
 
@@ -15,7 +15,7 @@ export const useSocket = () => {
 
         if (!socketInstance) {
             // Socket IO URL from environment or using API_BASE directly
-            const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "http://localhost:8080";
+            const socketUrl = env.NEXT_PUBLIC_WS_URL || "http://localhost:8080";
 
             socketInstance = io(socketUrl, {
                 path: "/api/socket/io",
