@@ -1,8 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/app-error.js";
 import { client } from "@repo/db";
-import { auth } from "../config/auth.js";
-import { fromNodeHeaders } from "better-auth/node";
+import { AUTH_COOKIE_NAME, verifyAuthToken } from "../utils/jwt-auth.js";
 
 export interface AuthRequest extends Request {
     userId?: string;
@@ -16,17 +15,16 @@ export const protect = async (
     next: NextFunction
 ) => {
     try {
-        const session = await auth.api.getSession({
-            headers: fromNodeHeaders(req.headers),
-        });
+        const token = req.cookies?.[AUTH_COOKIE_NAME];
 
-        if (!session?.session?.token) {
+        if (!token) {
             throw new AppError("Not authorized. Please login.", 401);
         }
 
-        // Get user from database
+        const payload = verifyAuthToken(token);
+
         const user = await client.user.findUnique({
-            where: { id: session.user.id! },
+            where: { id: payload.userId },
             select: {
                 id: true,
                 email: true,

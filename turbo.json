@@ -4,7 +4,7 @@
         "DATABASE_URL",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
-        "BETTER_AUTH_SECRET",
+        "JWT_SECRET",
         "PORT",
         "SOCKET_PORT",
         "NODE_ENV",
@@ -26,9 +26,9 @@
         "KAFKA_CLIENT_CERT",
         "KAFKA_CLIENT_KEY",
         "NEXT_PUBLIC_API_BASE",
-        "NEXT_PUBLIC_BETTER_AUTH_URL",
         "NEXT_PUBLIC_WEB_URL",
-        "NEXT_PUBLIC_LIVEKIT_URL"
+        "NEXT_PUBLIC_LIVEKIT_URL",
+        "NEXT_PUBLIC_GOOGLE_CLIENT_ID"
     ],
     "$schema": "https://turbo.build/schema.json",
     "concurrency": "20",

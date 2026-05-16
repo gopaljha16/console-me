@@ -1,11 +1,28 @@
 "use client"
 
-import { authHandler } from '@/utils/auth-handlers';
-import { Button } from '@repo/ui';
-import { Chrome } from 'lucide-react';
+import { loginWithGoogleCredential } from '@/utils/auth-handlers';
+import { GoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 const LoginPage = () => {
+    const router = useRouter();
+
+    const onGoogleCredential = async (credential?: string) => {
+        if (!credential) {
+            toast.error("Google sign-in did not return a credential");
+            return;
+        }
+
+        try {
+            await loginWithGoogleCredential(credential);
+            router.push("/onboarding");
+            router.refresh();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Google sign-in failed");
+        }
+    };
 
     return (
         <section className='flex min-h-screen bg-zinc-50 dark:bg-transparent px-4 py-16 md:py-32 '>
@@ -20,10 +37,11 @@ const LoginPage = () => {
                     </div>
 
                     <div className='mt-6 grid grid-cols-1 gap-2'>
-                        <Button variant='outline' className='w-full' onClick={authHandler}>
-                            <Chrome className='mr-2 h-4 w-4' />
-                            Sign in with Google
-                        </Button>
+                        <GoogleLogin
+                            onSuccess={(credentialResponse) => onGoogleCredential(credentialResponse.credential)}
+                            onError={() => toast.error("Google sign-in failed")}
+                            useOneTap
+                        />
                     </div>
                 </div>
             </div>

@@ -1,9 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/app-error.js";
 import { client, Role } from "@repo/db";
-import { auth } from "../config/auth.js";
-import { fromNodeHeaders } from "better-auth/node";
 import { AuthRequest } from "./user-middleware.js";
+import { AUTH_COOKIE_NAME, verifyAuthToken } from "../utils/jwt-auth.js";
 
 export const protectCreator = async (
     req: AuthRequest,
@@ -11,17 +10,15 @@ export const protectCreator = async (
     next: NextFunction
 ) => {
     try {
-        const session = await auth.api.getSession({
-            headers: fromNodeHeaders(req.headers),
-        });
+        const token = req.cookies?.[AUTH_COOKIE_NAME];
 
-        if (!session?.session?.token) {
+        if (!token) {
             throw new AppError("Not authorized. Please login.", 401);
         }
+        const payload = verifyAuthToken(token);
 
-        // Get user from database
         const user = await client.user.findUnique({
-            where: { id: session.user.id },
+            where: { id: payload.userId },
             include: {
                 creatorProfile: true,
             }

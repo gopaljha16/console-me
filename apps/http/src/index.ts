@@ -1,6 +1,6 @@
 import express from "express";
-import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { client } from "@repo/db";
 import { server_env as env } from "@repo/env";
 import postRoutes from "./routes/post-routes";
@@ -13,7 +13,8 @@ import likeRoutes from "./routes/like-routes";
 import followRoutes from "./routes/follow-routes";
 import omegleRoutes from "./routes/omegle-routes";
 import friendRoutes from "./routes/friend-routes";
-import { auth } from "./config/auth";
+import authRoutes from "./routes/auth-routes";
+import { AUTH_COOKIE_NAME, verifyAuthToken } from "./utils/jwt-auth";
 
 const app = express();
 
@@ -37,21 +38,28 @@ app.use(
     }),
 );
 
-app.all('/api/auth/*splat', toNodeHandler(auth))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser())
+
+app.use("/api/auth", authRoutes);
 
 app.get("/api/me", async (req, res) => {
-    const session = await auth.api.getSession({
-        headers: fromNodeHeaders(req.headers),
-    });
+    const token = req.cookies?.[AUTH_COOKIE_NAME];
 
-    if (!session) {
+    if (!token) {
+        return res.json(null);
+    }
+
+    let payload: ReturnType<typeof verifyAuthToken>;
+    try {
+        payload = verifyAuthToken(token);
+    } catch {
         return res.json(null);
     }
 
     const user = await client.user.findUnique({
-        where: { id: session.user.id },
+        where: { id: payload.userId },
         select: {
             id: true,
             email: true,
@@ -74,9 +82,12 @@ app.get("/api/me", async (req, res) => {
     }
 
     return res.json({
-        ...session,
+        session: {
+            id: payload.userId,
+            userId: payload.userId,
+            expiresAt: null,
+        },
         user: {
-            ...session.user,
             ...user,
             creatorId: user.creatorProfile?.id ?? null,
             username: user.creatorProfile?.username ?? null,

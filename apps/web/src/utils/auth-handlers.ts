@@ -1,8 +1,19 @@
-import { signIn } from '@/lib/auth-client';
-import { web_env as env } from "@/lib/env";
+import { API_BASE } from "./constants";
 
-export const authHandler = () => signIn.social({
-    provider: 'google',
-    callbackURL: `${env.NEXT_PUBLIC_WEB_URL}?success=true`,
-    errorCallbackURL: `${env.NEXT_PUBLIC_WEB_URL}/sign-in`,
-});
+export const loginWithGoogleCredential = async (credential: string) => {
+    const response = await fetch(`${API_BASE}/api/auth/google`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ credential }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.message || "Google sign-in failed");
+    }
+
+    return response.json();
+};

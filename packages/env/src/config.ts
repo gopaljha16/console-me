@@ -6,7 +6,7 @@ export const ServerEnvSchema = z.object({
     DATABASE_URL: z.string().url(),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
-    BETTER_AUTH_SECRET: z.string(),
+    JWT_SECRET: z.string(),
     PORT: z.string(),
     SOCKET_PORT: z.string(),
     NODE_ENV: z.string().optional().default("development"),
