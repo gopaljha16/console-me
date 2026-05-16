@@ -9,7 +9,7 @@ export const ServerEnvSchema = z.object({
     BETTER_AUTH_SECRET: z.string(),
     PORT: z.string(),
     SOCKET_PORT: z.string(),
-    NODE_ENV: z.string().optional(),
+    NODE_ENV: z.string().optional().default("development"),
     APP_URL: z.string().url(),
     WEB_URL: z.string().url(),
     SERVER_URL: z.string().url(),
@@ -22,6 +22,11 @@ export const ServerEnvSchema = z.object({
     REDIS_PASSWORD: z.string().optional(),
     GEMINI_API_KEY: z.string(),
     OPENROUTER_API_KEY: z.string(),
+    KAFKA_BROKER: z.string(),
+    KAFKA_SSL: z.string().transform((val) => val.toLowerCase() === "true"),
+    KAFKA_CA_CERT: z.string().optional(),
+    KAFKA_CLIENT_CERT: z.string().optional(),
+    KAFKA_CLIENT_KEY: z.string().optional()
 });
 
 export type ServerEnv = z.infer<typeof ServerEnvSchema>;

@@ -2,27 +2,30 @@
     "ui": "tui",
     "globalEnv": [
         "DATABASE_URL",
-        "CLERK_SECRET_KEY",
-        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-        "NEXT_PUBLIC_CLERK_SIGN_IN_URL",
-        "NEXT_PUBLIC_CLERK_SIGN_UP_URL",
-        "NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL",
-        "NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL",
-        "NEXT_PUBLIC_SOCKET_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "NEXT_PUBLIC_LIVEKIT_URL",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "BETTER_AUTH_SECRET",
+        "PORT",
+        "SOCKET_PORT",
+        "NODE_ENV",
+        "APP_URL",
+        "WEB_URL",
+        "SERVER_URL",
         "LIVEKIT_API_KEY",
         "LIVEKIT_API_SECRET",
-        "UPLOADTHING_TOKEN",
-        "REDIS_URL",
-        "REDIS_CACHE_URL",
+        "LIVEKIT_URL",
+        "REDIS_HOST",
+        "REDIS_PORT",
+        "REDIS_USERNAME",
+        "REDIS_PASSWORD",
+        "GEMINI_API_KEY",
+        "OPENROUTER_API_KEY",
         "KAFKA_BROKER",
-        "KAFKA_BOOTSTRAP_SERVERS",
-        "GOOGLE_GEMINI_API_KEY",
-        "NODE_ENV"
+        "KAFKA_SSL",
+        "KAFKA_CA_CERT",
+        "KAFKA_CLIENT_CERT",
+        "KAFKA_CLIENT_KEY"
     ],
-    "$schema": "https://turbo.build/schema.json",
-    "concurrency": "20",
     "tasks": {
         "build": {
             "dependsOn": [
@@ -33,7 +36,11 @@
                 "$TURBO_DEFAULT$",
                 ".env*"
             ],
-            "outputs": []
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**",
+                "dist/**"
+            ]
         },
         "lint": {
             "dependsOn": [

@@ -2,6 +2,7 @@ import { getAccountCheckConsumer } from "./account-check-report-consumer";
 import { getNotificationConsumer } from "./notification-consumer";
 import { getPostConsumer } from "./post-consumer";
 import { getDMConsumer } from "./dm-consumer";
+import { ensureKafkaTopics } from "@repo/kafka";
 
 const LAG_CHECK_INTERVAL = 30000; // 30 seconds
 const HIGH_LAG_THRESHOLD = 1000;
@@ -62,7 +63,8 @@ function startLagMonitoring(consumers: BaseConsumer[]) {
 async function runConsumer() {
     console.log("Initializing Kafka Consumer Service...");
 
-    // Initialize and start all consumers
+    await ensureKafkaTopics();
+
     consumers = await initConsumers();
 
     if (consumers.length === 0) {
