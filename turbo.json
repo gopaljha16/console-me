@@ -24,7 +24,11 @@
         "KAFKA_SSL",
         "KAFKA_CA_CERT",
         "KAFKA_CLIENT_CERT",
-        "KAFKA_CLIENT_KEY"
+        "KAFKA_CLIENT_KEY",
+        "NEXT_PUBLIC_API_BASE",
+        "NEXT_PUBLIC_BETTER_AUTH_URL",
+        "NEXT_PUBLIC_WEB_URL",
+        "NEXT_PUBLIC_LIVEKIT_URL"
     ],
     "tasks": {
         "build": {

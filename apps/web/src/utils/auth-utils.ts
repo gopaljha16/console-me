@@ -42,20 +42,25 @@ const getCookieHeader = async () => {
 
 const fetchFromHttpApi = async <T>(path: string, init?: RequestInit): Promise<T | null> => {
     const cookie = await getCookieHeader();
-    const response = await fetch(`${API_BASE}${path}`, {
-        ...init,
-        headers: {
-            ...(cookie ? { cookie } : {}),
-            ...init?.headers,
-        },
-        cache: "no-store",
-    });
+    try {
+        const response = await fetch(`${API_BASE}${path}`, {
+            ...init,
+            headers: {
+                ...(cookie ? { cookie } : {}),
+                ...init?.headers,
+            },
+            cache: "no-store",
+        });
 
-    if (!response.ok) {
+        if (!response.ok) {
+            return null;
+        }
+
+        return response.json() as Promise<T>;
+    } catch (error) {
+        console.error(`Failed to fetch ${path} from HTTP API:`, error);
         return null;
     }
-
-    return response.json() as Promise<T>;
 };
 
 const getSession = () => fetchFromHttpApi<SessionResponse>("/api/me");
