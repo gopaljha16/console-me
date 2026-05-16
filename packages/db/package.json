@@ -11,7 +11,7 @@
     "dev": "docker-compose up -d && tsc --watch",
     "build": "tsc",
     "lint": "eslint src",
-    "preinstall": "prisma generate"
+    "postinstall": "prisma generate"
   },
   "exports": {
     ".": {
